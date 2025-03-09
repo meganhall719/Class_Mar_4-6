@@ -224,7 +224,7 @@ manipulate(slope.test(beta1, data = d), beta1 = slider(-1, 1, initial = 0, step 
 
 Analytically, for a uni variate regression (one predictor, one outcome variable) we can solve for beta coefficients
 
-![](images/Screenshot 2025-03-04 at 4.51.04 PM.png)
+![](images/Screenshot%202025-03-04%20at%204.51.04%20PM.png)
 
 ```{r}
 b1 <- (cor(d$centered_weight, d$centered_height) * sd(d$height))/((sd$centered_weight)))
@@ -244,4 +244,207 @@ ssxy
 ```{r}
 #Linear model 
 m<-lm(height~wight, data = d)
+```
+
+## In Class March 6
+
+Zombie apocalypse survivors dataset
+
+```{r}
+library(tidyverse)
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/main/zombies.csv"
+d <- read_csv(f, col_names = TRUE)
+head(d)
+plot(x= d$weight, y = d$height)
+
+m<-lm(height~weight, data = d)
+```
+
+evaluate statistical evidence that there is a relationship between these variables. These next steps involve the process of statistical inference
+
+```{r}
+library(dplyr)
+summary(m)
+```
+
+A lot of output in the summary:
+
+first get ouput of the model we ran
+
+get estimates of beta coefficients
+
+also get adjusted r squared value ( taking amount of variance of the y variable that can be explained by the variance in the x variable
+
+X value ; predicted y value through; if the actual y value is far enough tell you how good the fit.
+
+R squared will be big if it data points fit the line of best fit well! the opposite is true
+
+Tells you the number of degrees of freedom. ; n number of observations - 1 for each statistical analysis,
+
+### other functions to run
+
+run the command names() on the ooutput of lm
+
+```{r}
+names(m)
+```
+
+```{r}
+m$coefficients
+
+m$model
+
+m$fitted.values #gives us predicted value of y "height"
+
+
+m$residuals
+
+head(m$residuals) #should be normally distributed tells us hoow good our fittted and real vaalues are wich was m$model
+
+histogram(m$residuals) #does look normally distributed
+
+qqplot(m) #plots standardized individuals lets you know if it follows a strraight line it is normally distributed. 
+```
+
+## use qq plot on exercise 8 !\*!
+
+#### Broom package! I like it
+
+```{r}
+broom::tidy(m)
+```
+
+#### pulls out confidence intervals for you! How handy
+
+```{r}
+confint(m)
+
+```
+
+#### Calculating the SE in the regression coefficients
+
+use standard error in B1 to get the standard error of B0
+
+confirm you are getting what. r spits. out for u.
+
+#### calculating T statistic and p value by hand
+
+t = estimate/ standard error
+
+p value = 2 \*\* pt (t, df = nrow-2)
+
+```{r}
+
+39.6/.596
+confint(m)
+
+2*pt(47.5, df = 998, lower.tail = FALSE)
+```
+
+pt gives you your t statistic
+
+you can add them together ! Get the same answer I don't know why
+
+```{r}
+pt(47.5, df = 998, lower.tail = FALSE) + pt(-47.5, df= 998, lower.tail = TRUE)
+```
+
+```{r}
+broom::glance(m)
+```
+
+### Key assumption of Linear Regression
+
+-   The sample is represntative of the population and is unbiased
+
+-   the predictor variables are measured with no error
+
+-   residuals have an expected value(mean) of zero and are normally distributed ( use QQ plots, too describe the distribution
+
+-   the relationship between the predictor variable and the response is not "linear"
+
+    -   plot outcome versus predictor
+
+-   plot rersidulas verrsus fitted values the variance of the rresidulas is constant across the. range of predictor variables (homoscedascity)
+
+-   for multiple regression: predictors are not highly correlated height \~ weight and age
+
+    -   if weight and age are highly correlated you cant use it
+
+    -   examine correlation matrix
+
+    -   compute variance inflation factors (VIFs), which measures how much multicollinearity increases when each predictor is added to a model
+
+### Alternatives to Ordinary Leas Squares Regression
+
+#### Model II regression approaches, a line of best fit is chosen that minimizes in some way
+
+```{r}
+broom::tidy(m)
+plot(x=d$weight, y = d$height)
+abline(coef(m), col = 'blue')
+
+library(lmodel2)
+m2 <-lmodel2(height ~weight, data = d, range.y = "relative", range.x = "relative", nperm = 1000)
+
+summary(m2)
+
+#putting a line of best fit through data 
+betas <- broom::tidy(m2) |>
+  filter(method == "OLS")|>
+  pull(estimate)
+abline(betas, col = "blue") #plotting on top of height and weight plot
+
+betas <- broom::tidy(m2) |>
+  filter(method == "RMA")|>
+  pull(estimate)
+abline(betas, col = "red")
+
+
+```
+
+### Maximum likelihood estimation
+
+trying to figure out what parameter values are the most consistent given values we have
+
+## Exercise 8
+
+```{r}
+f <-"https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/Street_et_al_2017.csv"
+d <- read_csv(f, col_names = TRUE)
+head(d)
+
+#Plot brain size (ECV) as a function of social group size, longevity, juvenile period length, and reproductive lifespan (Repro_lifespan) (separate plots for each) 
+
+library(ggplot2)
+library(gridExtra)
+
+
+par(mfrow = c(2, 2))
+plot(d$Longevity, d$ECV)
+plot(d$Group_size, d$ECV)
+plot(d$Weaning, d$ECV)
+plot(d$Repro_lifespan, d$ECV)
+m1 <-lm(formula = ECV~Longevity, data = d)
+m1
+
+
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(d$Longevity, d$ECV)
+plot(d$Group_size, d$ECV)
+plot(d$Weaning, d$ECV)
+plot(d$Repro_lifespan, d$ECV)
+m1 <-lm(formula = ECV~Longevity, data = d)
+m1
+
+broom::tidy(m1)
+confint(m1)
+
+c <- d|>
+  filter(Taxonomic_group == "Catarrhini")
+c
+m1 <-lm(formula = ECV~Longevity, data = c)
 ```
